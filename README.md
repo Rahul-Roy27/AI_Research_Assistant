@@ -6,7 +6,7 @@ A modular Retrieval-Augmented Generation (RAG) application that allows users to 
 
 ## Live Demo
 
-**Coming Soon**
+Streamlit link :- https://ai-research-assistant-by-rahulroy27.streamlit.app/
 
 ---
 
