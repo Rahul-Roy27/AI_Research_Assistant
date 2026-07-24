@@ -9,6 +9,7 @@ import uuid
 from typing import List, Dict, Any
 import fitz  # PyMuPDF
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+import re
 
 logger = logging.getLogger(__name__)
 
