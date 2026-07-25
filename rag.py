@@ -88,6 +88,7 @@ def _compute_chunk_hash(chunk: Dict[str, Any]) -> str:
 
 def index_chunks(chunks: List[Dict[str, Any]]) -> None:
     """Index document chunks with their embeddings and metadata into ChromaDB.
+    Resets the collection before indexing to ensure only the currently uploaded documents are stored.
     Avoids duplicate indexing of the same chunk (based on text, source, page) within the same session.
     Uses each chunk's chunk_id as the ChromaDB document ID.
     Generates embeddings in batches for efficiency.
@@ -97,27 +98,50 @@ def index_chunks(chunks: List[Dict[str, Any]]) -> None:
             - 'text': str (the chunk text)
             - 'metadata': dict with keys 'source' (str), 'page' (int), 'chunk_id' (str)
     """
+    global _collection, _indexed_chunk_hashes
     if not chunks:
         logger.warning("No chunks provided for indexing")
         return
 
     try:
-        collection = _get_or_create_collection()
+        client = _get_chroma_client()
+        # Delete the existing collection to start fresh
+        try:
+            client.delete_collection(name=COLLECTION_NAME)
+            logger.info(f"Deleted existing collection: {COLLECTION_NAME}")
+        except Exception as e:
+            # Collection might not exist, which is fine
+            logger.info(f"No existing collection to delete, or error: {e}")
+
+        # Create a new collection
+        collection = client.create_collection(name=COLLECTION_NAME)
+        logger.info(f"Created new collection: {COLLECTION_NAME}")
+        _collection = collection
+
+        # Reset the duplicate chunk hash set for this indexing session
+        _indexed_chunk_hashes = set()
 
         texts = []
         metadatas = []
         ids = []
 
+        # Log the unique sources being indexed for verification
+        sources_indexed = set()
         for chunk in chunks:
+            source = chunk.get("metadata", {}).get("source", "unknown")
+            sources_indexed.add(source)
+
             chunk_hash = _compute_chunk_hash(chunk)
             if chunk_hash in _indexed_chunk_hashes:
-                logger.debug(f"Skipping duplicate chunk: {chunk['metadata']['source']} page {chunk['metadata']['page']}")
+                logger.debug(f"Skipping duplicate chunk: {source} page {chunk['metadata']['page']}")
                 continue
 
             texts.append(chunk["text"])
             metadatas.append(chunk["metadata"])
             ids.append(chunk["metadata"]["chunk_id"])
             _indexed_chunk_hashes.add(chunk_hash)
+
+        logger.info(f"Indexing documents from sources: {', '.join(sources_indexed)}")
 
         if not texts:
             logger.info("All chunks were duplicates, nothing to index")
