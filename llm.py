@@ -1,7 +1,6 @@
-"""LLM utilities for the AI Research Assistant.
+"""LLM utilities for the AI Research Assistant using Groq.
 
-This module handles initialization of the Gemini model and generation of answers.
-Uses the latest Google GenAI SDK.
+This module handles initialization of the Groq model and generation of answers.
 """
 
 import os
@@ -9,54 +8,45 @@ import logging
 from typing import Any
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # take environment variables from .env
 
-try:
-    import google.genai as genai
-    GENAI_AVAILABLE = True
-except ImportError:
-    GENAI_AVAILABLE = False
+from groq import Groq
 
 logger = logging.getLogger(__name__)
 
-# Global variable for the GenAI client (singleton pattern)
-_genai_client: Any = None
+# Global variable for the Groq client (singleton pattern)
+_groq_client: Any = None
 
-# Model name - using a current Gemini model
-MODEL_NAME = "gemini-2.5-flash"
+# Model name - using Groq's fast model
+MODEL_NAME = "llama-3.3-70b-versatile"
 
 
-def _get_genai_client():
-    """Lazy load and return the GenAI client.
+def _get_groq_client():
+    """Lazy load and return the Groq client.
 
     Returns:
-        genai.Client: The Google GenAI client instance.
+        Groq: The Groq client instance.
     """
-    global _genai_client
-    if _genai_client is None:
-        if not GENAI_AVAILABLE:
-            raise ImportError(
-                "Google GenAI package not installed. "
-                "Please install it with: pip install google-genai"
-            )
-        api_key = os.getenv("GOOGLE_API_KEY")
+    global _groq_client
+    if _groq_client is None:
+        api_key = os.getenv("GOOGLE_API_KEY")  # keeping env var name for backward compatibility
         if not api_key:
             raise ValueError(
                 "GOOGLE_API_KEY environment variable not set. "
-                "Please set it to use Gemini."
+                "Please set it to use Groq (you can put your Groq key here)."
             )
         try:
-            logger.info("Initializing Google GenAI client")
-            _genai_client = genai.Client(api_key=api_key)
-            logger.info("GenAI client initialized successfully")
+            logger.info("Initializing Groq client")
+            _groq_client = Groq(api_key=api_key)
+            logger.info("Groq client initialized successfully")
         except Exception as e:
-            logger.error(f"Failed to initialize GenAI client: {e}")
-            raise RuntimeError(f"Could not initialize GenAI client: {e}") from e
-    return _genai_client
+            logger.error(f"Failed to initialize Groq client: {e}")
+            raise RuntimeError(f"Could not initialize Groq client: {e}") from e
+    return _groq_client
 
 
 def generate_answer(prompt: str) -> str:
-    """Generate an answer using the Gemini model.
+    """Generate an answer using the Groq model.
 
     Args:
         prompt: The prompt string to send to the model.
@@ -72,15 +62,25 @@ def generate_answer(prompt: str) -> str:
         return ""
 
     try:
-        client = _get_genai_client()
+        client = _get_groq_client()
         logger.debug(f"Generating answer for prompt (first 100 chars): {prompt[:100]}...")
-        response = client.models.generate_content(
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
             model=MODEL_NAME,
-            contents=prompt
         )
-        answer = response.text
+        answer = chat_completion.choices[0].message.content
         logger.info("Answer generated successfully")
         return answer
     except Exception as e:
         logger.error(f"Error generating answer: {e}")
+        # Check if it's a rate limit or other known error
+        if "rate limit" in str(e).lower() or "429" in str(e):
+            friendly_msg = ("I'm unable to generate an answer due to API rate limits. "
+                            "Please try again later.")
+            return friendly_msg
         raise RuntimeError(f"Failed to generate answer: {e}") from e
