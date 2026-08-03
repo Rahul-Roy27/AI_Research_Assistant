@@ -29,11 +29,13 @@ def _get_groq_client():
     """
     global _groq_client
     if _groq_client is None:
-        api_key = os.getenv("GOOGLE_API_KEY")  # keeping env var name for backward compatibility
+        # Try GROQ_API_KEY first, then fall back to GOOGLE_API_KEY for backward compatibility
+        api_key = os.getenv("GROQ_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
             raise ValueError(
-                "GOOGLE_API_KEY environment variable not set. "
-                "Please set it to use Groq (you can put your Groq key here)."
+                "GROQ_API_KEY environment variable not set. "
+                "Please set it to use Groq (you can put your Groq API key here)."
+                " For backward compatibility, GOOGLE_API_KEY is also accepted."
             )
         try:
             logger.info("Initializing Groq client")

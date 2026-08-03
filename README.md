@@ -1,6 +1,6 @@
 # AI Research Assistant
 
-A modular Retrieval-Augmented Generation (RAG) application that allows users to upload PDF documents and ask natural language questions. The system retrieves relevant document chunks using semantic search and generates context-aware answers using Google's Gemini 2.5 Flash.
+A modular Retrieval-Augmented Generation (RAG) application that allows users to upload PDF documents and ask natural language questions. The system retrieves relevant document chunks using semantic search and generates context-aware answers using Groq's Llama 3.3 70B model.
 
 ---
 
@@ -14,7 +14,7 @@ Streamlit link :- https://ai-research-assistant-by-rahulroy27.streamlit.app/
 
 - Upload and process multiple PDF documents
 - Semantic search using SentenceTransformer embeddings
-- AI-powered question answering with Gemini 2.5 Flash
+- AI-powered question answering with Groq Llama 3.3 70B
 - Source citations with filenames and page numbers
 - Persistent vector storage using ChromaDB
 - Interactive Streamlit chat interface
@@ -28,7 +28,7 @@ Streamlit link :- https://ai-research-assistant-by-rahulroy27.streamlit.app/
 |----------|------------|
 | Language | Python |
 | Frontend | Streamlit |
-| LLM | Google Gemini 2.5 Flash |
+| LLM | Groq Llama-3.3-70b-versatile |
 | Embedding Model | all-MiniLM-L6-v2 |
 | Vector Database | ChromaDB |
 | PDF Processing | PyMuPDF |
@@ -73,7 +73,7 @@ pip install -r requirements.txt
 Create a `.env` file:
 
 ```env
-GEMINI_API_KEY=your_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 ```
 
 Run the application:
