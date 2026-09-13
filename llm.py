@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 _groq_client: Any = None
 
 # Model name - using Groq's fast model
-MODEL_NAME = "llama-3.3-70b-versatile"
+MODEL_NAME = "openai/gpt-oss-120b"
 
 
 def _get_groq_client():

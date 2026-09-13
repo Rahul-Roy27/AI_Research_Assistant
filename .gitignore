@@ -158,3 +158,5 @@ cython_debug
 # OS generated files
 .DS_Store
 Thumbs.db
+make_appendix.sh
+PROJECT_EXPLANATION.md
